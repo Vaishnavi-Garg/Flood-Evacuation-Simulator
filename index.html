@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clement Town — Flood Evacuation Simulator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header>
+    <div class="brand">
+        <div class="brand-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+                <line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>
+            </svg>
+        </div>
+        <div class="brand-text">
+            <h1>Clement Town</h1>
+            <span>Flood Evacuation Simulator</span>
+        </div>
+        <span class="badge">Project</span>
+    </div>
+    <div class="header-right">
+        <button class="icon-btn" id="btn-theme" title="Toggle theme" onclick="simulation.toggleTheme()">
+            <svg class="sun-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg class="moon-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <button class="icon-btn" id="btn-fullscreen" title="Fullscreen" onclick="simulation.toggleFullscreen()">
+            <svg id="fs-enter-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            <svg id="fs-exit-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+        </button>
+        <div class="status-pill">
+            <div class="status-dot"></div>
+            Weather : Heavy Rain
+        </div>
+        <div class="clock" id="clock">--:--:--</div>
+    </div>
+</header>
+
+<main>
+    <div id="canvas-wrapper">
+        <div class="map-watermark">CLEMENT TOWN</div>
+        <canvas id="mapCanvas"></canvas>
+        <div class="toast" id="toast"></div>
+
+        <div class="legend" id="legend">
+            <div class="legend-title">Map Legend</div>
+            <div class="legend-body">
+                <div class="legend-grid">
+                    <div class="legend-row"><div class="legend-dot" style="background:#fff; box-shadow:0 0 6px rgba(255,255,255,0.6)"></div>Evacuation Vehicle</div>
+                    <div class="legend-row"><div class="legend-dot" style="background:var(--safe)"></div>Safe Zone</div>
+                    <div class="legend-row"><div class="legend-line" style="background:var(--safe); height:3px"></div>Optimal Route</div>
+                    <div class="legend-row"><div class="legend-line" style="background:var(--danger); height:3px"></div>Blocked Road</div>
+                    <div class="legend-row"><div class="legend-line" style="background:var(--legend-road); height:4px"></div>Main Road</div>
+                    <div class="legend-row"><div class="legend-line" style="background:none; border-bottom:2px dotted var(--legend-secondary); height:0"></div>Minor Streets</div>
+                </div>
+                <div class="legend-hazard-count">Active hazards: <strong id="legend-hazards">0</strong></div>
+            </div>
+        </div>
+    </div>
+
+    <aside>
+        <div class="panel-card state-safe" id="unit-panel">
+            <h2>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 5v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                Vehicle Status
+            </h2>
+            <div id="vehicle-status" class="status-display text-safe">On Standby</div>
+            <div id="vehicle-sub" class="status-sub">Awaiting dispatch authorization</div>
+        </div>
+
+        <div class="panel-card" id="nav-panel">
+            <h2>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+                Navigation & Routing
+            </h2>
+            <div id="nav-display" class="status-display" style="color: var(--text-primary); font-size: 1.1rem;">Standing By</div>
+            <div id="nav-sub" class="status-sub">Initiate simulation to begin route optimization.</div>
+        </div>
+
+        <div class="metrics">
+            <div class="metric-tile">
+                <div class="metric-label">Active Hazards</div>
+                <div class="metric-value" id="metric-hazards">0</div>
+            </div>
+            <div class="metric-tile">
+                <div class="metric-label">Destination</div>
+                <div class="metric-value" id="metric-dest">—</div>
+            </div>
+        </div>
+
+        <div class="speed-control">
+            <div class="metric-label">Simulation Speed</div>
+            <div class="speed-buttons">
+                <button class="speed-btn" data-speed="0.5" onclick="simulation.setSpeed(0.5)">0.5×</button>
+                <button class="speed-btn active" data-speed="1" onclick="simulation.setSpeed(1)">1×</button>
+                <button class="speed-btn" data-speed="2" onclick="simulation.setSpeed(2)">2×</button>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn" id="btn-start" onclick="simulation.startEvacuation()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Initiate Evacuation
+            </button>
+            <button class="btn btn-secondary" onclick="simulation.reset()">Reset Scenario</button>
+        </div>
+
+        <div class="help-section">
+            <button class="help-toggle" id="help-toggle" onclick="toggleHelp()">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="9 18 15 12 9 6"/></svg>
+                How to use
+            </button>
+            <div class="help-content" id="help-content">
+                <ol>
+                    <li>Click <strong>Initiate Evacuation</strong> to deploy the response unit.</li>
+                    <li>Select corridors on the map to simulate hazard conditions.</li>
+                    <li>Adjust speed, export snapshots, or toggle fullscreen for presentations.</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="panel-card activity-panel" id="activity-panel">
+            <button class="panel-toggle" onclick="toggleActivityLog()">
+                Activity Log
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="activity-body" id="activity-body">
+                <div class="activity-list" id="activity-list"></div>
+            </div>
+        </div>
+
+        <div class="footer-brand">Confidential Demo · Urban Resilience</div>
+    </aside>
+</main>
+
+<script src="js/utils.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/simulation.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>
